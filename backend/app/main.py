@@ -28,22 +28,29 @@ except ImportError:
 
 app = FastAPI()
 
-# --- CORS Configuration ---
-# Allows requests from your frontend development server
-origins = [
-    "http://localhost",      # Allow base localhost
-    "http://localhost:3000", # Default React dev port
-    "http://localhost:5173", # Default Vite dev port
-    # Add any other origins if your frontend runs elsewhere
-]
+# --- NEW: Import CORS Middleware --- 
+from fastapi.middleware.cors import CORSMiddleware
+# --- END NEW --- 
 
+# --- NEW: Define allowed origins --- 
+# You should restrict this more in a real production scenario
+# For now, allow your Netlify deploy and localhost for testing
+origins = [
+    "https://webreasearchagent.netlify.app", # Your deployed frontend
+    "http://localhost:3000",             # Your local frontend dev server
+    # Add any other origins if needed
+]
+# --- END NEW --- 
+
+# --- NEW: Add CORS Middleware --- 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=origins, # List of allowed origins
     allow_credentials=True,
-    allow_methods=["*"], # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"], # Allow all headers
+    allow_methods=["*"],    # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"],    # Allow all headers
 )
+# --- END NEW --- 
 
 # --- Pydantic Model for Request Body ---
 class ResearchRequest(BaseModel):
