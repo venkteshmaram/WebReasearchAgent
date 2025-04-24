@@ -1,14 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Divider from '@mui/material/Divider';
 import Stack from '@mui/material/Stack';
 import Link from '@mui/material/Link';
-import LaunchIcon from '@mui/icons-material/Launch';
 import SummarizeIcon from '@mui/icons-material/Summarize';
 import Grow from '@mui/material/Grow';
 import Skeleton from '@mui/material/Skeleton';
@@ -29,11 +23,8 @@ const ResultsDisplay = ({ researchData, query, isLoading }) => {
   // Tab state removed
 
   // Extract data
-  const queryAnalysis = getNested(researchData, 'query_analysis');
   const contentAnalysis = getNested(researchData, 'content_analysis');
   const synthesizedReport = getNested(researchData, 'synthesized_report');
-
-  // allOrganicResults calculation removed
 
   // --- Skeleton Components --- 
   const ReportSkeleton = () => (
