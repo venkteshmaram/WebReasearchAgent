@@ -1,0 +1,16 @@
+beautifulsoup4
+fastapi
+google-search-results
+lxml
+newsapi-python
+openai
+pydantic
+python-dotenv
+requests
+robotexclusionrulesparser
+selenium
+sentence-transformers
+starlette
+tavily-python
+uvicorn[standard]
+webdriver-manager 

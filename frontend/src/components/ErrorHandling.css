@@ -1,0 +1,23 @@
+.error-handling {
+  text-align: center;
+  margin: 2rem auto;
+}
+
+.error-message {
+  color: red;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.retry-button {
+  padding: 0.5rem 1rem;
+  background-color: #09f;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background-color: #007acc;
+} 

@@ -1,0 +1,53 @@
+.results-display {
+  margin: 1rem;
+}
+
+.results-display h2 {
+  margin-bottom: 1rem;
+}
+
+.results-display ul {
+  list-style: none;
+  padding: 0;
+}
+
+.result-item {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  background-color: #fff;
+  text-align: left;
+}
+
+.result-item h3 {
+  margin: 0 0 0.5rem;
+}
+
+.result-item p {
+  margin: 0 0 0.5rem;
+}
+
+.result-item a {
+  color: #09f;
+  text-decoration: none;
+}
+
+.result-item a:hover {
+  text-decoration: underline;
+}
+
+.load-more {
+  display: block;
+  margin: 1rem auto;
+  padding: 0.5rem 1rem;
+  background-color: #09f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.load-more:hover {
+  background-color: #007acc;
+} 

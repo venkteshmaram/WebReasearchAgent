@@ -1,0 +1,28 @@
+python-dotenv
+requests
+beautifulsoup4
+lxml
+openai
+# Add LLM library based on choice, e.g.:
+# openai
+# anthropic
+# google-generativeai 
+# serpapi-python # Incorrect name
+google-search-results # Correct name for SerpAPI client
+fastapi
+uvicorn[standard] # ASGI server for FastAPI
+selenium
+webdriver-manager
+sse-starlette
+robotexclusionrulesparser
+# Add Search API library if needed, e.g.:
+# serpapi-python 
+# -- Added based on agent.py and tools.py imports --
+tavily-python
+newsapi-python
+sentence-transformers # For semantic re-ranking
+pandas # For table parsing in scrape_web_page (assumed)
+lxml # Parser for pandas.read_html (assumed)
+pytest-mock
+# Added for robust HTML table parsing with pandas
+html5lib
