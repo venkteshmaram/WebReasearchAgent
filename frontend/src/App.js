@@ -170,7 +170,11 @@ function App() {
     }
 
     const encodedQuery = encodeURIComponent(trimmedQuery);
-    const url = `/api/research-stream?query=${encodedQuery}`;
+    
+    // --- Use full backend URL in production, relative path locally --- 
+    const backendHost = process.env.REACT_APP_BACKEND_URL || ''; // Get from env var or default to empty string
+    const url = `${backendHost}/api/research-stream?query=${encodedQuery}`;
+    // --- End URL construction ---
     
     console.log(`Connecting to SSE endpoint: ${url}`);
     const es = new EventSource(url);
