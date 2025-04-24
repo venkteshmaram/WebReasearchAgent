@@ -10,6 +10,7 @@ requests
 robotexclusionrulesparser
 selenium
 sentence-transformers
+sse-starlette
 starlette
 tavily-python
 uvicorn[standard]
