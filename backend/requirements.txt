@@ -14,4 +14,6 @@ sse-starlette
 starlette
 tavily-python
 uvicorn[standard]
-webdriver-manager 
+webdriver-manager
+# Used for data manipulation in tools, potentially table extraction
+pandas 
