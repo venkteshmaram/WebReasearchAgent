@@ -61,21 +61,37 @@ agent_instance = None # Initialize as None globally
 def get_agent():
     """FastAPI dependency to lazily load the agent."""
     global agent_instance
+    print("--- ENTERING get_agent --- ")
     if agent_instance is None:
-        print("Initializing WebResearchAgent instance...")
+        print("Initializing WebResearchAgent instance (agent_instance is None)...")
         try:
+            print("  Attempting WebResearchAgent() creation...")
             agent_instance = WebResearchAgent()
+            print("  WebResearchAgent() creation apparently successful.")
             if not agent_instance.llm_client:
-                 print("Warning: Agent LLM client failed to initialize.")
-                 # Optional: raise HTTPException if LLM is absolutely critical
+                 print("  Warning: Agent LLM client failed to initialize after creation.")
+            else:
+                 print("  Agent LLM client seems OK after creation.")
         except Exception as e:
-            print(f"FATAL: Failed to initialize WebResearchAgent: {e}")
-            # Raise an exception to prevent using a broken agent
+            print(f"  FATAL: Exception during WebResearchAgent() creation: {e}")
+            import traceback 
+            traceback.print_exc() 
             raise HTTPException(status_code=503, detail=f"Research agent failed to initialize: {e}") 
-        print("WebResearchAgent instance initialized.")
-    # Add a check here in case initialization failed but didn't raise
-    if agent_instance is None or not hasattr(agent_instance, 'run_research_pipeline'):
-         raise HTTPException(status_code=503, detail="Research agent unavailable after initialization attempt.")
+        print("Finished WebResearchAgent initialization block.")
+    else:
+        print("--- Using existing agent_instance --- ")
+        
+    # Check after initialization attempt
+    if agent_instance is None:
+        print("--- Agent instance check FAILED (still None) after initialization attempt --- ")
+        raise HTTPException(status_code=503, detail="Agent instance is None after initialization.")
+    elif not hasattr(agent_instance, 'run_research_pipeline'):
+        print("--- Agent instance check FAILED (missing method) after initialization attempt --- ")
+        raise HTTPException(status_code=503, detail="Agent instance missing critical method after initialization.")
+    else:
+        print("--- Agent instance check PASSED after attempt --- ")
+        
+    print("--- EXITING get_agent (returning agent instance) --- ")
     return agent_instance
 # --- END Agent Initialization --- 
 
