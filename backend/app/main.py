@@ -146,23 +146,55 @@ async def research_event_generator(query: str, agent: WebResearchAgent):
         }
         yield json.dumps({"status": "scraping_web_done", "progress": current_step/total_steps, "message": f"Scraping/Crawling complete. Items processed: {scraping_summary['urls_processed']}", "data": {"scraping_summary": scraping_summary}})
         
-        # Step 4: Analyze Content 
+        # --- Step 4: Analyze Content (Corrected Logic) ---
         current_step += 1
         status_key = "analyzing_content"
         yield json.dumps({"status": status_key, "progress": current_step/total_steps, "message": status_key})
-        # Assuming analyze_content_parallel exists and handles async/threading correctly
-        # If analyze_content is purely CPU-bound, asyncio.to_thread is appropriate
-        # If it involves I/O, agent.py might need async modifications
-        content_analysis_results = await asyncio.to_thread(
-            agent.analyze_content,
-            scraped_content_map,
-            analysis_result.get("original_query", query),
-            analysis_result.get("target_data_points", []),
-            analysis_result.get("is_news_focused", False)
-        )
-        results["content_analysis"] = content_analysis_results
-        items_analyzed_count = len(content_analysis_results)
-        yield json.dumps({"status": f"{status_key}_done", "progress": current_step/total_steps, "message": f"Content analysis complete (Items Processed: {items_analyzed_count}).", "data": {"content_analysis": content_analysis_results}})
+        
+        content_analysis_results = {} # Initialize dict to store analysis results per item
+        items_analyzed_count = 0
+        content_to_analyze_map = results.get("scraped_content", {})
+        original_query_for_analysis = analysis_result.get("original_query", query)
+        target_data_for_analysis = analysis_result.get("target_data_points", [])
+        is_news_for_analysis = analysis_result.get("is_news_focused", False)
+
+        print(f"Starting analysis for {len(content_to_analyze_map)} scraped items...")
+        # Loop through each scraped item
+        for item_key, item_content in content_to_analyze_map.items():
+            analysis_result_item = None
+            # Basic check: Analyze only if there's content
+            if item_content:
+                 # Check for Tavily answer (handled directly, no LLM call needed here)
+                 if item_key.startswith('tavily_answer::') and isinstance(item_content, str):
+                     analysis_result_item = {"is_relevant": True, "summary": item_content, "extracted_data": None, "source_type": "tavily_answer"}
+                     print(f"  -> Using direct Tavily answer for key: {item_key}")
+                     items_analyzed_count += 1
+                 # Otherwise, analyze using LLM (for dicts from scrape or string snippets)
+                 elif isinstance(item_content, (dict, str)):
+                     print(f"  -> Analyzing item: {item_key[:80]}...")
+                     # Run the potentially blocking analyze_content in a thread
+                     analysis_result_item = await asyncio.to_thread(
+                         agent.analyze_content,
+                         item_content, # Pass individual item content
+                         original_query_for_analysis,
+                         target_data_for_analysis,
+                         is_news_for_analysis
+                     )
+                     items_analyzed_count += 1
+                 else:
+                     print(f"  -> Skipping item with unexpected content type: {item_key}")
+                     analysis_result_item = {"is_relevant": False, "summary": None, "extracted_data": None, "error": "Invalid content type", "source_type": "unknown"}
+            else:
+                 # Handle cases where scraping failed (value is None) or item is empty
+                 print(f"  -> Skipping item with no content: {item_key}")
+                 analysis_result_item = {"is_relevant": False, "summary": None, "extracted_data": None, "error": "No content scraped", "source_type": "scraped_page_failed"}
+                 
+            # Store the result for this item
+            content_analysis_results[item_key] = analysis_result_item
+
+        results["content_analysis"] = content_analysis_results # Store the dictionary of results
+        # Yield status update after processing all items
+        yield json.dumps({"status": f"{status_key}_done", "progress": current_step/total_steps, "message": f"Content analysis complete (Items Processed: {items_analyzed_count}).", "data": {"content_analysis_summary": f"{items_analyzed_count} items analyzed"}}) # Maybe don't send full results here
 
         # Step 5: Synthesize Report
         current_step += 1
