@@ -453,7 +453,7 @@ class WebResearchAgent:
                     else:
                         print("  -> Tavily and NewsAPI keys missing. No supplementary search possible.")
 
-                # --- 3. Call Supplementary API (with Pagination/Fallback) --- 
+                # --- 3. Call Supplementary API (with Pagination/Fallback) ---
                 current_api_to_try = supplementary_api
                 attempt_fallback = True # Allow one fallback attempt if primary supplementary fails
                 
@@ -482,7 +482,7 @@ class WebResearchAgent:
                                 else:
                                     print(f"  -> No more results from NewsAPI on page {current_page} or call failed.")
                                     break # Stop NewsAPI pagination
-                            
+
                         elif current_api_to_try == 'tavily':
                             # Tavily doesn't paginate easily, make one call for remaining target
                             tavily_response = perform_tavily_search(query, max_results=remaining_target)
@@ -491,7 +491,7 @@ class WebResearchAgent:
                                 api_metadata = {k: v for k, v in tavily_response.items() if k != 'results'} # Store Tavily metadata
                             else:
                                 print(f"  -> Tavily call returned no results or failed.")
-                                 
+
                     except Exception as e:
                         print(f"  -> Error during {current_api_to_try} call: {e}")
                         temp_results_this_api = [] # Ensure empty on error
@@ -513,30 +513,36 @@ class WebResearchAgent:
                         current_api_to_try = fallback_api
                         attempt_fallback = False # Only one fallback attempt
                     else:
-                         # No more fallbacks or API succeeded (even if results < target)
-                         break # Exit the supplementary API loop
-            else:
-                print(f"  -> Target of {total_results_target} results met or exceeded by initial SerpApi search.")
+                        # No more fallbacks or API succeeded (even if results < target)
+                        break # Exit the supplementary API loop
 
-            # --- 4. Combine and Re-rank Final Results --- 
+            # --- 4. Combine and Re-rank Final Results ---
             final_results.extend(supplementary_results_list)
             final_results = final_results[:total_results_target]
 
             print(f"  -> Final combined results count before re-ranking: {len(final_results)}")
-            # Re-enable re-ranking call
-            if final_results and len(final_results) > 1: # Only rerank if multiple results
-                reranked_results = self._rerank_search_results(final_results, analysis_result)
-            else:
-                reranked_results = final_results
-            print(f"  -> Final combined results count after re-ranking: {len(reranked_results)}")
+            
+            # --- Re-ranking Step (Temporarily Disabled) ---
+            if final_results and len(final_results) > 1: # Only attempt if multiple results
+                # Original call (disabled):
+                # final_results_ranked = self._rerank_search_results(final_results, analysis_result)
+                
+                # Bypass re-ranking for testing:
+                final_results_ranked = final_results # Use un-ranked results
+                print(f"  -> Skipping re-ranking (disabled for testing). Using {len(final_results_ranked)} results.")
+            else: # No need to rerank if 0 or 1 results
+                final_results_ranked = final_results
+                print(f"  -> Skipping re-ranking (0 or 1 result). Using {len(final_results_ranked)} results.")
 
-            # --- 5. Store Results for Sub-query --- 
+            # print(f"  -> Final combined results count after re-ranking: {len(final_results_ranked)}") # Keep commented out
+
+            # --- 5. Store Results for Sub-query ---
             search_results_collection[query] = {
                 'api_used': sorted(list(set(apis_successfully_used))), # Ensure consistent order 
-                'results': reranked_results,
+                'results': final_results_ranked, # Use the potentially un-ranked results
                 'metadata': primary_metadata
             }
-            print(f"Finished processing query: '{query[:60]}...'. APIs Used: {apis_successfully_used}, Results: {len(reranked_results)}")
+            print(f"Finished processing query: '{query[:60]}...'. APIs Used: {apis_successfully_used}, Results: {len(final_results_ranked)}")
 
         print("\n--- Hybrid Web Search Phase Complete ---")
         print("Search Results Summary:")
@@ -591,16 +597,16 @@ class WebResearchAgent:
                 for result_item in results_list:
                     if not isinstance(result_item, dict):
                         continue # Skip non-dict items
-                        
+
                     url = None
                     snippet = None
                     title = result_item.get('title')
 
-                    # --- UPDATED EXTRACTION LOGIC --- 
+                    # --- UPDATED EXTRACTION LOGIC ---
                     # Try common keys regardless of specific API used
                     url = result_item.get('link') or result_item.get('url')
                     snippet = result_item.get('snippet') or result_item.get('content') or result_item.get('description')
-                    # --- END UPDATED LOGIC --- 
+                    # --- END UPDATED LOGIC ---
 
                     if url:
                         # Basic URL validation (optional)
@@ -615,7 +621,7 @@ class WebResearchAgent:
                         # Store snippet if available and url is valid
                         if snippet and url:
                             # Use a generic key, or try to guess source? Generic is safer.
-                            snippet_key = f"snippet::{url}" 
+                            snippet_key = f"snippet::{url}"
                             if snippet_key not in direct_content:
                                 # Format snippet for clarity
                                 direct_content[snippet_key] = f"Snippet: {str(snippet).strip()}"
@@ -684,16 +690,16 @@ class WebResearchAgent:
                             if normalized_next_url not in visited and \
                                parsed_next_url.scheme in ['http', 'https'] and \
                                (not stay_on_domain or next_domain == base_domain):
-                                   # --- Check robots.txt for the potential next URL BEFORE adding --- 
-                                   next_robots_parser = self._get_robots_parser(normalized_next_url)
-                                   if next_robots_parser and not next_robots_parser.is_allowed(USER_AGENT, normalized_next_url):
-                                        # print(f"    -> Link disallowed by robots.txt, not adding to queue: {normalized_next_url}")
-                                        continue # Skip adding this link
-                                   # --- End Check --- 
-                                   
-                                   queue.append((normalized_next_url, current_depth + 1))
-                                   visited.add(normalized_next_url)
-                                   links_found_on_page += 1
+                                        # --- Check robots.txt for the potential next URL BEFORE adding ---
+                                        next_robots_parser = self._get_robots_parser(normalized_next_url)
+                                        if next_robots_parser and not next_robots_parser.is_allowed(USER_AGENT, normalized_next_url):
+                                            # print(f"    -> Link disallowed by robots.txt, not adding to queue: {normalized_next_url}")
+                                            continue # Skip adding this link
+                                        # --- End Check ---
+
+                                        queue.append((normalized_next_url, current_depth + 1))
+                                        visited.add(normalized_next_url)
+                                        links_found_on_page += 1
                         print(f"  -> Added {links_found_on_page} valid links to queue.")
                     else:
                         print(f"  -> No text content found in scraped data for link extraction.")
