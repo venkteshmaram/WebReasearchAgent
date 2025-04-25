@@ -62,15 +62,18 @@ class WebResearchAgent:
         # --- Initialize Re-ranker Model ---
         self.reranker_model_name = reranker_model_name
         self.reranker_model = None
-        try:
-            # Load the model upon initialization
-            print(f"Loading re-ranking model: {self.reranker_model_name}...")
-            self.reranker_model = SentenceTransformer(self.reranker_model_name)
-            print("Re-ranking model loaded successfully.")
-        except Exception as e:
-            print(f"Error loading sentence-transformer model '{self.reranker_model_name}': {e}")
-            print("Warning: Semantic re-ranking will be disabled.")
-            self.reranker_model = None # Ensure it's None if loading failed
+        # --- Temporarily Disable Model Loading to Save Memory ---
+        # try:
+        #     # Load the model upon initialization
+        #     print(f"Loading re-ranking model: {self.reranker_model_name}...")
+        #     self.reranker_model = SentenceTransformer(self.reranker_model_name)
+        #     print("Re-ranking model loaded successfully.")
+        # except Exception as e:
+        #     print(f"Error loading sentence-transformer model '{self.reranker_model_name}': {e}")
+        #     print("Warning: Semantic re-ranking will be disabled.")
+        #     self.reranker_model = None # Ensure it's None if loading failed
+        print(f"Skipping loading of re-ranking model ({self.reranker_model_name}) to save memory.")
+        # --- End Temporary Disable ---
 
         # --- NEW: Initialize robots.txt cache --- 
         self.robots_cache = {}
