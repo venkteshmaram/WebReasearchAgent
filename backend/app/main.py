@@ -153,7 +153,13 @@ async def research_event_generator(query: str, agent: WebResearchAgent):
         # Assuming analyze_content_parallel exists and handles async/threading correctly
         # If analyze_content is purely CPU-bound, asyncio.to_thread is appropriate
         # If it involves I/O, agent.py might need async modifications
-        content_analysis_results = await asyncio.to_thread(agent.analyze_content_parallel, scraped_content_map, analysis_result)
+        content_analysis_results = await asyncio.to_thread(
+            agent.analyze_content,
+            scraped_content_map,
+            analysis_result.get("original_query", query),
+            analysis_result.get("target_data_points", []),
+            analysis_result.get("is_news_focused", False)
+        )
         results["content_analysis"] = content_analysis_results
         items_analyzed_count = len(content_analysis_results)
         yield json.dumps({"status": f"{status_key}_done", "progress": current_step/total_steps, "message": f"Content analysis complete (Items Processed: {items_analyzed_count}).", "data": {"content_analysis": content_analysis_results}})
