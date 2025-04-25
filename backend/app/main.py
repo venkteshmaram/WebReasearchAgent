@@ -216,9 +216,26 @@ async def research_event_generator(query: str, agent: WebResearchAgent):
         current_step += 1
         status_key = "synthesizing_report"
         yield json.dumps({"status": status_key, "progress": current_step/total_steps, "message": status_key})
-        final_report = await asyncio.to_thread(agent.synthesize_results, query, content_analysis_results)
-        results["synthesized_report"] = final_report
-        yield json.dumps({"status": f"{status_key}_done", "progress": current_step/total_steps, "message": "Report synthesis complete.", "data": {"synthesized_report": final_report}})
+        # Call synthesize_results and expect a dictionary
+        synthesis_result_dict = await asyncio.to_thread(
+            agent.synthesize_results, 
+            original_query_for_analysis, # Use the original query from analysis step
+            content_analysis_results
+        )
+        # Store the report text separately if needed, though it's in the dict
+        results["synthesized_report_text"] = synthesis_result_dict.get("report", "Error: Report not found in synthesis result.")
+        results["relevant_sources"] = synthesis_result_dict.get("sources", [])
+        
+        # Yield the final event including both report and sources
+        yield json.dumps({
+            "status": f"{status_key}_done", 
+            "progress": 1.0, # Ensure progress hits 1.0
+            "message": "Report synthesis complete.", 
+            "data": {
+                "synthesized_report": synthesis_result_dict.get("report"), 
+                "sources": synthesis_result_dict.get("sources", [])
+            }
+        })
 
     except Exception as e:
         print(f"Error during SSE generation for query \"{query}\": {e}")

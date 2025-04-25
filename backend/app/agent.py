@@ -910,7 +910,7 @@ class WebResearchAgent:
 
         return analysis
 
-    def synthesize_results(self, original_query: str, content_analysis: dict) -> str:
+    def synthesize_results(self, original_query: str, content_analysis: dict) -> dict:
         """
         Synthesizes the analyzed content summaries into a final report.
 
@@ -920,33 +920,45 @@ class WebResearchAgent:
                               ({'is_relevant': bool, 'summary': str|None}).
 
         Returns:
-            A string containing the synthesized report, or an error/empty message.
+            A dictionary containing:
+            - "report": The synthesized report string.
+            - "sources": A list of source identifiers (URLs/keys) used for synthesis.
         """
-        report = "Synthesis failed: No relevant content found or LLM error."
+        # --- Default return structure ---
+        result = {
+            "report": "Synthesis failed: No relevant content found or LLM error.",
+            "sources": []
+        }
+        # --- End Default ---
+
         max_summary_length = 10000 # Limit total summary length sent to LLM
 
         if not self.llm_client or not isinstance(self.llm_client, OpenAI):
             print("Cannot synthesize results: LLM client not available or not OpenAI.")
-            return report
+            return result # Return default structure on failure
 
         # Filter relevant summaries and extracted data
         relevant_content = []
-        relevant_sources = []
-        for url, analysis_data in content_analysis.items():
+        relevant_source_keys = [] # Store the keys/URLs of relevant items
+        for item_key, analysis_data in content_analysis.items():
             if analysis_data and analysis_data.get('is_relevant'):
                 source_info = {
-                    "url": url,
+                    "url": item_key, # Use the item_key as the identifier
                     "summary": analysis_data.get('summary'),
                     "extracted_data": analysis_data.get('extracted_data')
                 }
                 # Only include if there's a summary OR extracted data
                 if source_info["summary"] or (isinstance(source_info["extracted_data"], dict) and source_info["extracted_data"]):
                     relevant_content.append(source_info)
-                relevant_sources.append(url)
+                    relevant_source_keys.append(item_key) # Add the key/URL to our list
 
         if not relevant_content:
             print("No relevant summaries or extracted data found to synthesize.")
-            return "Synthesis failed: No relevant content or data points were generated from the sources."
+            result["report"] = "Synthesis failed: No relevant content or data points were generated from the sources."
+            return result
+
+        # Update the sources list in the result
+        result["sources"] = relevant_source_keys
 
         # Combine content for the prompt, respecting length limit
         content_input_str = ""
@@ -1001,20 +1013,20 @@ Based ONLY on the content above, generate a synthesized report answering the ori
             )
             response_content = response.choices[0].message.content
             if response_content:
-                report = response_content.strip()
+                result["report"] = response_content.strip() # Update report in result dict
                 print(f"Report synthesis successful.")
             else:
                 print("Error: Synthesis LLM returned empty content.")
-                report = "Synthesis failed: LLM returned empty content."
+                result["report"] = "Synthesis failed: LLM returned empty content."
 
         except APIError as e:
             print(f"OpenAI API Error during synthesis: {e}")
-            report = f"Synthesis failed: OpenAI API Error {e.status_code}"
+            result["report"] = f"Synthesis failed: OpenAI API Error {e.status_code}"
         except Exception as e:
             print(f"Unexpected error during LLM call for synthesis: {e}")
-            report = f"Synthesis failed: Unexpected error ({type(e).__name__})"
+            result["report"] = f"Synthesis failed: Unexpected error ({type(e).__name__})"
 
-        return report
+        return result # Return the dictionary
 
     # --- MODIFIED: Orchestrating Method ---
     def run_research_pipeline(self, user_query: str, total_results_target: int = 10, max_pages_to_crawl: int = 5, crawl_depth: int = 0) -> dict:
