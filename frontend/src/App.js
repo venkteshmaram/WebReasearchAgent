@@ -22,6 +22,8 @@ function App() {
   const [mode, setMode] = useState('light');
   const [query, setQuery] = useState('');
   const [researchData, setResearchData] = useState(null);
+  const [synthesizedReport, setSynthesizedReport] = useState('');
+  const [sources, setSources] = useState([]);
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [currentStatus, setCurrentStatus] = useState('');
@@ -161,6 +163,8 @@ function App() {
     setLoading(true);
     setError(null);
     setResearchData(null);
+    setSynthesizedReport('');
+    setSources([]);
     setCurrentStatus('Agent started research...');
     setProgress(0);
     setResearchCompletedSuccessfully(false);
@@ -194,15 +198,12 @@ function App() {
         if (parsedData.message) setCurrentStatus(parsedData.message);
         if (parsedData.progress) setProgress(parsedData.progress);
 
-        if (parsedData.data) {
-          setResearchData(prevData => ({
-            ...prevData,
-            ...parsedData.data,
-          }));
-        }
-
         if (parsedData.status === 'synthesizing_report_done') {
-          console.log("Research complete (final message received).");
+          console.log("Final Synthesis Data Received:", parsedData.data);
+          if (parsedData.data) {
+             setSynthesizedReport(parsedData.data.synthesized_report || 'Report data missing.');
+             setSources(parsedData.data.sources || []);
+          }
           setCurrentStatus("Research complete!");
           setProgress(1);
           setResearchCompletedSuccessfully(true);
@@ -210,13 +211,24 @@ function App() {
         } else if (parsedData.status === 'error') {
           console.error("Backend error received:", parsedData.message);
           setError(parsedData.message || 'An error occurred during research.');
+          setSynthesizedReport('');
+          setSources([]);
           setCurrentStatus("Research failed.");
           setProgress(0);
           closeEventSource();
+        } else if (parsedData.data) {
+           setResearchData(prevData => ({
+              ...prevData,
+              ...parsedData.data,
+              synthesized_report: undefined,
+              sources: undefined 
+           }));
         }
       } catch (e) {
         console.error("Failed to parse SSE message:", event.data, e);
         setError('Received malformed data from server.');
+        setSynthesizedReport('');
+        setSources([]);
         closeEventSource();
       }
     };
@@ -286,7 +298,7 @@ function App() {
         />
         
         {/* Main Content */}
-        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <Box component="main" sx={{ flexGrow: 1, p: 3, mt: '64px' }}>
           {/* AppBar */}
           <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
             <Toolbar>
@@ -339,11 +351,14 @@ function App() {
             <ErrorHandling error={error} setError={setError} />
 
             {/* Results Display */}
-            {(researchData || isLoading) && (
+            {(isLoading || synthesizedReport || sources.length > 0) && (
               <ResultsDisplay 
-                researchData={researchData} 
-                query={query} 
                 isLoading={isLoading} 
+                report={synthesizedReport} 
+                sources={sources} 
+                queryAnalysis={researchData?.query_analysis} 
+                searchResultsSummary={researchData?.search_results_summary} 
+                scrapingSummary={researchData?.scraping_summary} 
               />
             )}
             
