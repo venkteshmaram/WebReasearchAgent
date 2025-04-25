@@ -110,6 +110,7 @@ async def research_event_generator(query: str, agent: WebResearchAgent):
     max_pages_to_use = DEFAULT_MAX_PAGES_NO_CRAWL
 
     try:
+        print("--- ENTERING research_event_generator try block --- ")
         # Step 1: Analyze Query
         current_step += 1
         status_key = "analyzing_query"
