@@ -6,10 +6,6 @@ import Link from '@mui/material/Link';
 import SummarizeIcon from '@mui/icons-material/Summarize';
 import Grow from '@mui/material/Grow';
 import Skeleton from '@mui/material/Skeleton';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import LinkIcon from '@mui/icons-material/Link';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
@@ -17,11 +13,6 @@ import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ReactMarkdown from 'react-markdown';
 import './ResultsDisplay.css';
-
-// Helper to safely get nested properties
-const getNested = (obj, ...args) => {
-  return args.reduce((obj, level) => obj && obj[level], obj);
-};
 
 const ResultsDisplay = ({ 
   isLoading,
